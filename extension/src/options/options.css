@@ -1,0 +1,23 @@
+.wrap { max-width: 720px; margin: 0 auto; padding: 28px 16px 48px; }
+.page-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.page-head h1 { font-size: 19px; margin: 0; }
+.saved { margin-left: auto; color: var(--ok); font-weight: 700; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+.card h2 { font-size: 14px; margin: 0 0 8px; }
+.card h3 { font-size: 13px; margin: 14px 0 4px; }
+.hint { margin: 0 0 10px; font-size: 12.5px; }
+.line { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 7px 0; }
+label.line { cursor: pointer; }
+.line select { width: auto; min-width: 200px; }
+.block { display: flex; flex-direction: column; gap: 6px; padding: 7px 0; }
+.num { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.num input { width: 72px; background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; font: inherit; }
+.num.inline { margin-left: 6px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.rule { display: grid; grid-template-columns: auto 1fr 2fr auto auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+.rule:last-child { border-bottom: 0; }
+.rule select { width: auto; }
+.rule .dot { width: 12px; height: 12px; }
+@media (max-width: 600px) { .rule { grid-template-columns: auto 1fr auto auto; } .rule .pat { grid-column: 1 / -1; } }
+#rules { margin-bottom: 10px; }
+.foot { text-align: center; font-size: 12px; }

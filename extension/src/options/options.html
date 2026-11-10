@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TabNest</title>
+  <link rel="icon" href="../../icons/icon32.png">
+  <link rel="stylesheet" href="../ui/common.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="page-head">
+      <img src="../../icons/icon48.png" width="36" height="36" alt="">
+      <div><h1>TabNest</h1><div class="muted" data-i18n="optTitle"></div></div>
+      <span id="saved" class="saved" data-i18n="saved" hidden></span>
+    </header>
+
+    <section class="card">
+      <h2 data-i18n="optGeneral"></h2>
+      <label class="line"><span data-i18n="optLanguage"></span>
+        <select data-k="lang" id="lang"></select></label>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optRestore"></h2>
+      <label class="line"><span data-i18n="optLazy"></span><span class="switch"><input type="checkbox" data-k="lazyRestore"><span></span></span></label>
+      <label class="line"><span data-i18n="optRestoreGroups"></span><span class="switch"><input type="checkbox" data-k="restoreGroups"><span></span></span></label>
+      <label class="line"><span data-i18n="optRestoreTarget"></span>
+        <select data-k="restoreTarget">
+          <option value="newWindow" data-i18n="targetNewWindow"></option>
+          <option value="current" data-i18n="targetCurrent"></option>
+        </select></label>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optAutosave"></h2>
+      <label class="line"><span data-i18n="optAutosaveEvery"></span>
+        <span class="num"><input type="number" min="1" max="120" data-k="autosaveMinutes"> <span data-i18n="minutes"></span></span></label>
+      <label class="line"><span data-i18n="optAutosaveKeep"></span>
+        <span class="num"><input type="number" min="1" max="100" data-k="autosaveKeep"></span></label>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optGrouping"></h2>
+      <label class="line"><span data-i18n="optGroupingMode"></span>
+        <select data-k="groupingMode">
+          <option value="off" data-i18n="gmOff"></option>
+          <option value="rules" data-i18n="gmRules"></option>
+          <option value="smart" data-i18n="gmSmart"></option>
+        </select></label>
+      <label class="line"><span data-i18n="optGroupingMin"></span>
+        <span class="num"><input type="number" min="2" max="30" data-k="groupingMinTabs"> <span data-i18n="optGroupingTabs"></span></span></label>
+      <h3 data-i18n="optRules"></h3>
+      <p class="muted hint" data-i18n="optRulesHint"></p>
+      <div id="rules"></div>
+      <button id="add-rule" class="btn ghost sm" data-i18n="addRule"></button>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optArchive"></h2>
+      <p class="muted hint" data-i18n="optArchiveHint"></p>
+      <label class="line"><span><span data-i18n="optArchiveOn"></span>
+        <span class="num inline"><input type="number" min="1" max="365" data-k="archiveDays"> <span data-i18n="days"></span></span></span>
+        <span class="switch"><input type="checkbox" data-k="archiveEnabled"><span></span></span></label>
+      <label class="line"><span data-i18n="optArchiveExcludePinned"></span><span class="switch"><input type="checkbox" data-k="archiveExcludePinned"><span></span></span></label>
+      <label class="line"><span data-i18n="optArchiveExcludeGrouped"></span><span class="switch"><input type="checkbox" data-k="archiveExcludeGrouped"><span></span></span></label>
+      <label class="block"><span data-i18n="optArchiveWhitelist"></span>
+        <input class="input" type="text" data-k="archiveWhitelist" placeholder="mail.google.com, youtube.com"></label>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optDuplicates"></h2>
+      <label class="line"><span data-i18n="optDupAuto"></span><span class="switch"><input type="checkbox" data-k="dupAutoSwitch"><span></span></span></label>
+      <label class="line"><span data-i18n="optDupIgnoreHash"></span><span class="switch"><input type="checkbox" data-k="dupIgnoreHash"><span></span></span></label>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optHibernate"></h2>
+      <p class="muted hint" data-i18n="optHibernateHint"></p>
+      <label class="line"><span><span data-i18n="optHibernateOn"></span>
+        <span class="num inline"><input type="number" min="5" max="1440" data-k="hibernateMinutes"> <span data-i18n="minutes"></span></span></span>
+        <span class="switch"><input type="checkbox" data-k="hibernateEnabled"><span></span></span></label>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optShortcuts"></h2>
+      <div class="line"><span class="muted" data-i18n="optShortcutsHint"></span>
+        <button id="shortcuts" class="btn ghost sm" data-i18n="optShortcutsBtn"></button></div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="optData"></h2>
+      <p class="muted hint" data-i18n="optAbout"></p>
+      <div class="btns">
+        <button id="export" class="btn ghost sm" data-i18n="optExport"></button>
+        <button id="export-html" class="btn ghost sm" data-i18n="optExportHtml"></button>
+        <button id="import" class="btn ghost sm" data-i18n="optImport"></button>
+        <input id="import-file" type="file" accept=".json,.txt,.html,application/json,text/plain" hidden>
+        <button id="clear" class="btn danger sm" data-i18n="optClear"></button>
+      </div>
+      <p class="muted hint" data-i18n="optImportHint"></p>
+    </section>
+
+    <footer class="muted foot">
+      <a href="https://github.com/JasdanJC/tabnest" target="_blank">GitHub</a> ·
+      <a href="https://ko-fi.com/jasdanjc" target="_blank">Ko-fi</a> ·
+      <span id="version"></span>
+    </footer>
+  </div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
