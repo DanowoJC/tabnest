@@ -190,10 +190,10 @@ TabNest is free and open source. If it saves you from tab chaos, you can support
   <a href="https://ko-fi.com/jasdanjc"><img alt="Support me on Ko-fi" src="https://storage.ko-fi.com/cdn/kofi3.png?v=6" height="40"></a>
 </p>
 
-Bug reports and ideas are welcome in [Issues](https://github.com/JasdanJC/tabnest/issues).
+Bug reports and ideas are welcome in [Issues](https://github.com/DanowoJC/tabnest/issues).
 
 ---
 
 ## License
 
-Distributed under the [MIT License](LICENSE). © 2026 JasdanJC
+Distributed under the [MIT License](LICENSE). © 2026 DanowoJC
