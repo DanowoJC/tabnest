@@ -3,7 +3,7 @@ import { saveSession, restoreSession, realTab, focusTab, openUrl, captureWindow 
 import { groupWindowNow } from '../lib/grouping.js';
 import { findDuplicates, closeDuplicates, hibernateTabs, archiveTabs, topDomains } from '../lib/cleanup.js';
 import { setLang, t, applyI18n, ago, tabsLabel, formatDate } from '../lib/i18n.js';
-import { COLOR_HEX, countTabs, domainOf, makeMatcher } from '../lib/util.js';
+import { COLOR_HEX, countTabs, domainOf, makeMatcher, isSavableUrl } from '../lib/util.js';
 import { sessionsToHtml, download } from '../lib/importexport.js';
 import { $, $$, el, icon, iconBtn, favicon, toast, sessionName, promptText, choose, confirmBox, menu } from '../ui/dom.js';
 import { searchAll, renderResults } from '../ui/search.js';
@@ -46,7 +46,7 @@ async function renderOpen(root) {
   const dupIds = new Set(findDuplicates(allTabs, settings.dupIgnoreHash).map((x) => x.id));
 
   root.append(el('div', { class: 'toolbar' },
-    el('button', { class: 'btn sm', onclick: async () => { const name = await newSessionName(); if (name === null) return; const s = await saveSession({ scope: 'all', name }); if (s) toast(t('savedToast', s.name)); } }, icon('save', 14), t('saveAll')),
+    el('button', { class: 'btn sm', onclick: async () => { const name = await newSessionName(); if (name === null) return; const s = await saveSession({ scope: 'all', name }); toast(s ? t('savedToast', s.name) : t('nothingToSave')); } }, icon('save', 14), t('saveAll')),
     dupIds.size ? el('button', { class: 'btn ghost sm', onclick: async () => toast(t('closedDuplicates', await closeDuplicates(settings))) }, icon('dup', 14), t('closeDuplicates', dupIds.size)) : null,
     el('button', { class: 'btn ghost sm', onclick: async () => toast(t('hibernated', await hibernateTabs({ minutes: null }))) }, icon('moon', 14), t('hibernateNow'))));
 
@@ -67,7 +67,7 @@ async function renderOpen(root) {
         const name = await newSessionName();
         if (name === null) return;
         const s = await saveSession({ scope: 'window', windowId: w.id, name });
-        if (s) toast(t('savedToast', s.name));
+        toast(s ? t('savedToast', s.name) : t('nothingToSave'));
       }),
       iconBtn('group', t('groupNow'), async () => toast(t('grouped', await groupWindowNow(w.id, settings))))));
 
@@ -132,10 +132,19 @@ function sessionTabsBody(s, { editable }) {
       if (tb.archivedAt) tags.push({ text: t('archivedOn', ago(tb.archivedAt)) });
       body.append(tabRow({
         url: tb.url, title: tb.title, tags,
-        onclick: () => openUrl(tb.url),
+        onclick: async () => { if (!(await openUrl(tb.url))) toast(t('cantOpen')); },
         actions: editable ? [iconBtn('close', t('remove'), async () => {
           const fresh = await getSession(s.id);
-          fresh.windows[wi].tabs.splice(ti, 1);
+          if (!fresh) return;
+          // Find the tab by address (the list may have changed since it was drawn).
+          let w2 = fresh.windows[wi];
+          let k = w2 ? w2.tabs.findIndex((y) => y.url === tb.url) : -1;
+          if (k === -1) {
+            w2 = fresh.windows.find((x) => x.tabs.some((y) => y.url === tb.url));
+            k = w2 ? w2.tabs.findIndex((y) => y.url === tb.url) : -1;
+          }
+          if (k === -1) return;
+          w2.tabs.splice(k, 1);
           fresh.windows = fresh.windows.filter((x) => x.tabs.length);
           if (!fresh.windows.length) await deleteSession(s.id);
           else await putSession(fresh);
@@ -156,14 +165,33 @@ function sessionCard(s, { editable = true, extraActions = [] } = {}) {
   const more = (e) => menu(e.currentTarget, [
     { label: t('restoreNewWindow'), onclick: () => restoreSession(s, { target: 'newWindow' }) },
     { label: t('restoreHere'), onclick: () => restoreSession(s, { target: 'current', windowId: myWindowId }) },
-    editable && { label: t('rename'), onclick: async () => { const v = await promptText(t('rename'), s.name); if (v) await putSession({ ...s, name: v }); } },
-    editable && { label: t('updateFromWindow'), onclick: async () => { const w = await captureWindow(myWindowId); if (w.tabs.length) await putSession({ ...s, windows: [w] }); toast(t('saved')); } },
-    editable && { label: t('addCurrentTab'), onclick: async () => {
-      const [tab] = await chrome.tabs.query({ active: true, windowId: myWindowId });
-      if (!tab) return;
+    editable && { label: t('rename'), onclick: async () => {
+      const v = await promptText(t('rename'), s.name);
+      const fresh = v && (await getSession(s.id));
+      if (fresh) await putSession({ ...fresh, name: v });
+    } },
+    editable && { label: t('updateFromWindow'), onclick: async () => {
+      const w = await captureWindow(myWindowId);
       const fresh = await getSession(s.id);
-      fresh.windows[0].tabs.push(realTab(tab));
+      if (!w.tabs.length || !fresh) { toast(t('nothingToSave')); return; }
+      await putSession({ ...fresh, windows: [w] });
+      toast(t('saved'));
+    } },
+    editable && { label: t('addCurrentTab'), onclick: async () => {
+      // In the side panel the active tab is the page; in a full-page manager it's the manager
+      // itself, so fall back to the active tab of the last focused normal window.
+      let [tab] = await chrome.tabs.query({ active: true, windowId: myWindowId });
+      if (!tab || !isSavableUrl(realTab(tab).url) || realTab(tab).url.startsWith(chrome.runtime.getURL(''))) {
+        const w = await chrome.windows.getLastFocused({ windowTypes: ['normal'] }).catch(() => null);
+        [tab] = w ? await chrome.tabs.query({ active: true, windowId: w.id }) : [];
+      }
+      const rt = tab && realTab(tab);
+      if (!rt || !isSavableUrl(rt.url) || rt.url.startsWith(chrome.runtime.getURL(''))) { toast(t('cantAddTab')); return; }
+      const fresh = await getSession(s.id);
+      if (!fresh) return;
+      fresh.windows[0].tabs.push(rt);
       await putSession(fresh);
+      toast(t('saved'));
     } },
     editable && { label: t('mergeInto'), onclick: async () => {
       const others = (await listSessions('manual')).filter((x) => x.id !== s.id);
@@ -174,7 +202,10 @@ function sessionCard(s, { editable = true, extraActions = [] } = {}) {
       await putSession(dst);
       await deleteSession(s.id);
     } },
-    editable && { label: s.pinned ? t('unpinSession') : t('pinSession'), onclick: () => putSession({ ...s, pinned: !s.pinned }) },
+    editable && { label: s.pinned ? t('unpinSession') : t('pinSession'), onclick: async () => {
+      const fresh = await getSession(s.id);
+      if (fresh) await putSession({ ...fresh, pinned: !fresh.pinned });
+    } },
     { label: t('exportSession'), onclick: () => download(`${sessionName(s).replace(/[\\/:*?"<>|]/g, '_')}.html`, sessionsToHtml([s], sessionName), 'text/html') },
     ...extraActions,
     { label: t('delete'), danger: true, onclick: async () => { if (await confirmBox(t('confirmDelete', sessionName(s)))) await deleteSession(s.id); } },
@@ -197,7 +228,7 @@ async function renderSessions(root) {
     el('select', { onchange: (e) => { sessionSort = e.target.value; renderList(); } },
       el('option', { value: 'newest', text: t('sortNewest'), selected: sessionSort === 'newest' }),
       el('option', { value: 'name', text: t('sortName'), selected: sessionSort === 'name' })),
-    el('button', { class: 'btn sm', onclick: async () => { const name = await newSessionName(); if (name === null) return; const s = await saveSession({ scope: 'window', windowId: myWindowId, name }); if (s) toast(t('savedToast', s.name)); } }, icon('save', 14), t('saveWindow'))));
+    el('button', { class: 'btn sm', onclick: async () => { const name = await newSessionName(); if (name === null) return; const s = await saveSession({ scope: 'window', windowId: myWindowId, name }); toast(s ? t('savedToast', s.name) : t('nothingToSave')); } }, icon('save', 14), t('saveWindow'))));
   const list = el('div');
   root.append(list);
 
@@ -230,13 +261,22 @@ async function renderArchive(root) {
     root.append(el('div', { class: 'empty', text: t('archiveEmpty') }));
     return;
   }
+  // Remove an item by identity (the archive may have changed since it was drawn).
+  const drop = (x) => updateArchive((ar) => {
+    const k = ar.windows[0].tabs.findIndex((y) => y.url === x.url && y.archivedAt === x.archivedAt);
+    if (k > -1) ar.windows[0].tabs.splice(k, 1);
+  });
+  const reopen = async (x) => {
+    if (await openUrl(x.url)) await drop(x);
+    else toast(t('cantOpen'));
+  };
   const card = el('section', { class: 'card' }, el('div', { class: 'card-body', style: 'padding-top:6px' },
-    tabs.map((x, i) => tabRow({
+    tabs.map((x) => tabRow({
       url: x.url, title: x.title, sub: `${domainOf(x.url)} · ${t('archivedOn', ago(x.archivedAt))}`,
-      onclick: async () => { await openUrl(x.url); await updateArchive((ar) => { ar.windows[0].tabs.splice(i, 1); }); },
+      onclick: () => reopen(x),
       actions: [
-        iconBtn('restore', t('restore'), async () => { await openUrl(x.url); await updateArchive((ar) => { ar.windows[0].tabs.splice(i, 1); }); }),
-        iconBtn('close', t('remove'), () => updateArchive((ar) => { ar.windows[0].tabs.splice(i, 1); })),
+        iconBtn('restore', t('restore'), () => reopen(x)),
+        iconBtn('close', t('remove'), () => drop(x)),
       ],
     }))));
   root.append(card);
@@ -380,3 +420,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 render();
+
+// Safety net: any unexpected error in an action is shown instead of failing silently.
+window.addEventListener('unhandledrejection', (e) => { console.error(e.reason); toast(t('errorGeneric', e.reason?.message || String(e.reason))); });

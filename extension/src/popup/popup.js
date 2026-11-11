@@ -25,10 +25,9 @@ async function doSave(scope) {
   const name = await promptText(t('sessionNamePrompt'), t('defaultSessionName', n));
   if (name === null) return;
   const s = await saveSession({ scope, windowId, name: name || t('defaultSessionName', n) });
-  if (s) {
-    toast(t('savedToast', s.name));
-    renderRecent();
-  }
+  if (!s) { toast(t('nothingToSave')); return; }
+  toast(t('savedToast', s.name));
+  renderRecent();
 }
 
 async function renderRecent() {
@@ -121,3 +120,6 @@ document.addEventListener('keydown', (e) => {
 $('#q').focus();
 renderRecent();
 renderQuick();
+
+// Safety net: any unexpected error in an action is shown instead of failing silently.
+window.addEventListener('unhandledrejection', (e) => { console.error(e.reason); toast(t('errorGeneric', e.reason?.message || String(e.reason))); });

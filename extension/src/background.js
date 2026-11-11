@@ -135,7 +135,7 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
   if (command === 'save-window') {
     const n = (await listSessions('manual')).length + 1;
     const saved = await saveSession({ scope: 'window', windowId: tab?.windowId, name: t('defaultSessionName', n) });
-    if (saved) await flashBadge('✓');
+    await flashBadge(saved ? '✓' : '–');
   } else if (command === 'open-manager') {
     const wid = tab?.windowId ?? (await chrome.windows.getLastFocused()).id;
     await openManager(wid);

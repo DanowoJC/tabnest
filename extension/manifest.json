@@ -3,7 +3,7 @@
   "name": "TabNest",
   "short_name": "TabNest",
   "description": "Smart tab session manager: save and restore sessions, auto-group tabs by task, archive idle tabs, find duplicates and search everything.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "DanowoJC",
   "homepage_url": "https://github.com/DanowoJC/tabnest",
   "icons": {

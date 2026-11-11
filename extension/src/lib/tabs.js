@@ -137,20 +137,38 @@ export async function restoreSession(session, { target, windowId } = {}) {
       wid = windowId ?? (await chrome.windows.getLastFocused({ windowTypes: ['normal'] })).id;
     } else {
       const first = win.tabs[0];
-      const w = await chrome.windows.create({ url: first.url, focused: wi === 0 });
+      let w;
+      let blankTabId = null;
+      try {
+        w = await chrome.windows.create({ url: first.url, focused: wi === 0 });
+        firstTabId = w.tabs?.[0]?.id ?? null;
+        if (first.pinned && firstTabId !== null) await chrome.tabs.update(firstTabId, { pinned: true }).catch(() => {});
+      } catch {
+        // The first address can't be opened (e.g. a file:// page without access): open an
+        // empty window, create every tab normally and close the blank tab afterwards.
+        w = await chrome.windows.create({ focused: wi === 0 });
+        blankTabId = w.tabs?.[0]?.id ?? null;
+      }
       wid = w.id;
-      firstTabId = w.tabs?.[0]?.id ?? null;
-      if (first.pinned && firstTabId !== null) await chrome.tabs.update(firstTabId, { pinned: true });
+      const ids = await createTabs(wid, win, { lazy, firstTabId, activateFirst: blankTabId !== null });
+      if (blankTabId !== null && ids.some((x) => x !== null)) await chrome.tabs.remove(blankTabId).catch(() => {});
+      if (settings.restoreGroups) await recreateGroups(wid, win, ids);
+      continue;
     }
     const ids = await createTabs(wid, win, { lazy, firstTabId, activateFirst: target === 'current' && wi === 0 });
     if (settings.restoreGroups) await recreateGroups(wid, win, ids);
   }
 }
 
-/** Opens a single saved tab. */
+/** Opens a single saved tab. Returns false if the browser refused to open it. */
 export async function openUrl(url, { newWindow = false } = {}) {
-  if (newWindow) return chrome.windows.create({ url });
-  return chrome.tabs.create({ url });
+  try {
+    if (newWindow) await chrome.windows.create({ url });
+    else await chrome.tabs.create({ url });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Focuses an open tab and its window. */

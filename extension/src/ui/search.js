@@ -4,7 +4,7 @@ import { listSessions } from '../lib/storage.js';
 import { realTab, focusTab, openUrl } from '../lib/tabs.js';
 import { makeMatcher, domainOf } from '../lib/util.js';
 import { t } from '../lib/i18n.js';
-import { el, favicon, sessionName } from './dom.js';
+import { el, favicon, sessionName, toast } from './dom.js';
 
 export async function searchAll(query, limit = 60) {
   const match = makeMatcher(query);
@@ -56,7 +56,7 @@ export function renderResults(container, { open, saved }, { onAfterOpen } = {}) 
     container.append(el('div', { class: 'section-title', text: t('resultsSaved') }));
     for (const x of saved) {
       container.append(row(x.url, x.title, `${sessionName(x.session)} · ${domainOf(x.url)}`, async () => {
-        await openUrl(x.url);
+        if (!(await openUrl(x.url))) { toast(t('cantOpen')); return; }
         onAfterOpen?.();
       }));
     }

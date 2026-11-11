@@ -113,3 +113,6 @@ $('#clear').onclick = async () => {
   await clearAll();
   toast(t('done'));
 };
+
+// Safety net: any unexpected error in an action is shown instead of failing silently.
+window.addEventListener('unhandledrejection', (e) => { console.error(e.reason); toast(t('errorGeneric', e.reason?.message || String(e.reason))); });

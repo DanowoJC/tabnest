@@ -12,6 +12,10 @@ const MESSAGES = {
     statsNoData: 'Not enough data yet: a sample is taken every hour.',
     justNow: 'just now', minutesAgo: '{0} min ago', hoursAgo: '{0} h ago', daysAgo: '{0} d ago',
     untitled: 'Untitled', saved: 'Saved',
+    nothingToSave: 'Nothing to save: browser pages (New Tab, settings…) are skipped.',
+    cantAddTab: 'The current tab can\'t be saved (browser or extension page).',
+    cantOpen: 'The browser didn\'t allow opening this address.',
+    errorGeneric: 'Something went wrong: {0}',
 
     // popup
     searchPlaceholder: 'Search open tabs and saved sessions…',
@@ -81,6 +85,10 @@ const MESSAGES = {
     statsNoData: 'Aún no hay datos suficientes: se toma una muestra cada hora.',
     justNow: 'ahora mismo', minutesAgo: 'hace {0} min', hoursAgo: 'hace {0} h', daysAgo: 'hace {0} d',
     untitled: 'Sin título', saved: 'Guardado',
+    nothingToSave: 'No hay nada que guardar: las páginas internas del navegador (Nueva pestaña, ajustes…) se omiten.',
+    cantAddTab: 'La pestaña actual no se puede guardar (es una página del navegador o de una extensión).',
+    cantOpen: 'El navegador no ha permitido abrir esta dirección.',
+    errorGeneric: 'Algo ha fallado: {0}',
 
     searchPlaceholder: 'Buscar en pestañas abiertas y sesiones guardadas…',
     saveWindow: 'Guardar ventana', saveAll: 'Guardar todas las ventanas', saveSelected: 'Guardar pestañas seleccionadas',
